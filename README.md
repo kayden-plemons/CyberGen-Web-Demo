@@ -1,6 +1,8 @@
-[![Build & Deploy Web Demo (from private main repo)](https://github.com/kayden-plemons/CyberGen-Web-Demo/actions/workflows/deploy.yml/badge.svg)](https://github.com/kayden-plemons/CyberGen-Web-Demo/actions/workflows/deploy.yml) [![pages-build-deployment](https://github.com/kayden-plemons/CyberGen-Web-Demo/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/kayden-plemons/CyberGen-Web-Demo/actions/workflows/pages/pages-build-deployment)
+[![Build & Deploy Web Demo (from private main repo)](https://github.com/kayden-plemons/CyberGen-Web-Demo/actions/workflows/deploy.yml/badge.svg)](https://github.com/kayden-plemons/CyberGen-Web-Demo/actions/workflows/deploy.yml)
 
 # CyberGen (CypherCity) — Web Demo
+
+- https://kayden-plemons.github.io/CyberGen-Web-Demo/ 
 
 This repository hosts the public **web demo build** of CyberGen, an IT Capstone project developed by Team CyberGen.
 
