@@ -1,12 +1,11 @@
-name: Build & Deploy Web Demo (from main repo)
+name: Build & Deploy Web Demo (from private main repo)
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [source-main-updated]
   schedule:
-    # Optional fallback: rebuild nightly in case of missed webhooks
-    - cron: "0 9 * * *"
-  # If your main repo is public, you can also use repository_dispatch,
-  # but simplest is schedule + manual OR a push-trigger from main repo.
+    - cron: "0 9 * * *" # optional safety rebuild
 
 permissions:
   contents: read
@@ -25,24 +24,23 @@ jobs:
       - name: Checkout ONLY needed files from source repo (sparse)
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/kayden-plemons/CyberGen   # <-- CHANGE to your source repo
+          repository: kayden-plemons/CyberGen   # ✅ not a URL
           ref: main
-          token: ${{ secrets.SOURCE_REPO_TOKEN }} # omit if source repo is public
+          token: ${{ secrets.SOURCE_REPO_TOKEN }}
           path: source
           sparse-checkout: |
             lib
             web
+            assets
             pubspec.yaml
             pubspec.lock
             analysis_options.yaml
-            lib/assets
-            assets
           sparse-checkout-cone-mode: false
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: stable
 
       - name: Pub get
         working-directory: source
