@@ -1,0 +1,69 @@
+name: Build & Deploy Web Demo (from main repo)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Optional fallback: rebuild nightly in case of missed webhooks
+    - cron: "0 9 * * *"
+  # If your main repo is public, you can also use repository_dispatch,
+  # but simplest is schedule + manual OR a push-trigger from main repo.
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ONLY needed files from source repo (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: https://github.com/kayden-plemons/CyberGen   # <-- CHANGE to your source repo
+          ref: main
+          token: ${{ secrets.SOURCE_REPO_TOKEN }} # omit if source repo is public
+          path: source
+          sparse-checkout: |
+            lib
+            web
+            pubspec.yaml
+            pubspec.lock
+            analysis_options.yaml
+            lib/assets
+            assets
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - name: Pub get
+        working-directory: source
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: source
+        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: source/build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
