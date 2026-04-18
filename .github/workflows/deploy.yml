@@ -49,6 +49,9 @@ jobs:
           SAFE_MESSAGE=$(printf '%s' "$SOURCE_MESSAGE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
           echo "SAFE_MESSAGE=$SAFE_MESSAGE" >> $GITHUB_ENV
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Get PR title
         if: env.PR_NUMBER != ''
         run: |
