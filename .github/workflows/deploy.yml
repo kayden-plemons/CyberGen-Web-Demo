@@ -45,7 +45,7 @@ jobs:
           echo "SOURCE_BRANCH=main" >> $GITHUB_ENV
 
           SOURCE_MESSAGE=$(git log -1 --pretty=%s)
-          SAFE_MESSAGE=$(printf '%s' "$SOURCE_MESSAGE" | sed 's/[&/\]/\\&/g; s/"/\\"/g')
+          SAFE_MESSAGE=$(printf '%s' "$SOURCE_MESSAGE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
           echo "SAFE_MESSAGE=$SAFE_MESSAGE" >> $GITHUB_ENV
 
           PR_NUMBER=$(git log -1 --pretty=%s | grep -oE '#[0-9]+' | head -n1 | tr -d '#')
