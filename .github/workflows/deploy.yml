@@ -5,7 +5,7 @@ on:
   repository_dispatch:
     types: [source-main-updated]
   schedule:
-    - cron: "0 9 * * *" # optional safety rebuild
+    - cron: "0 9 * * *"
 
 permissions:
   contents: read
@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout ONLY needed files from source repo (sparse)
+      - name: Checkout only needed files from source repo
         uses: actions/checkout@v4
         with:
-          repository: kayden-plemons/CyberGen   # ✅ not a URL
+          repository: kayden-plemons/CyberGen
           ref: main
           token: ${{ secrets.SOURCE_REPO_TOKEN }}
           path: source
@@ -37,12 +37,47 @@ jobs:
             analysis_options.yaml
           sparse-checkout-cone-mode: false
 
+      - name: Get source build info
+        working-directory: source
+        run: |
+          echo "SOURCE_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "FULL_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "SOURCE_BRANCH=main" >> $GITHUB_ENV
+
+          SOURCE_MESSAGE=$(git log -1 --pretty=%s)
+          SAFE_MESSAGE=$(printf '%s' "$SOURCE_MESSAGE" | sed 's/[&/\]/\\&/g; s/"/\\"/g')
+          echo "SAFE_MESSAGE=$SAFE_MESSAGE" >> $GITHUB_ENV
+
+          PR_NUMBER=$(git log -1 --pretty=%s | grep -oE '#[0-9]+' | head -n1 | tr -d '#')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          echo "BUILD_TIME=$(TZ=America/Chicago git log -1 --date=format:'%m/%d/%Y %I:%M %p %Z' --pretty=%cd)" >> $GITHUB_ENV
+
+      - name: Build PR section
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo 'PR_SECTION=—' >> $GITHUB_ENV
+          else
+            echo "PR_SECTION=<a href=\"https://github.com/kayden-plemons/CyberGen/pull/${PR_NUMBER}\" target=\"_blank\">#${PR_NUMBER}</a>" >> $GITHUB_ENV
+          fi
+
+      - name: Inject build info into web index
+        working-directory: source
+        run: |
+          sed -i.bak "s|__BRANCH__|${SOURCE_BRANCH}|g" web/index.html
+          sed -i.bak "s|__PR_SECTION__|${PR_SECTION}|g" web/index.html
+          sed -i.bak "s|__FULL_SHA__|${FULL_SHA}|g" web/index.html
+          sed -i.bak "s|__SHA__|${SOURCE_SHA}|g" web/index.html
+          sed -i.bak "s|__MESSAGE__|${SAFE_MESSAGE}|g" web/index.html
+          sed -i.bak "s|__TIME__|${BUILD_TIME}|g" web/index.html
+          rm -f web/index.html.bak
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Pub get
+      - name: Flutter pub get
         working-directory: source
         run: flutter pub get
 
