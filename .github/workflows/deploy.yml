@@ -42,16 +42,29 @@ jobs:
         run: |
           echo "SOURCE_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "FULL_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-          echo "SOURCE_BRANCH=main" >> $GITHUB_ENV
+          echo "PR_NUMBER=$(git log -1 --pretty=%s | grep -oE '#[0-9]+' | head -n1 | tr -d '#')" >> $GITHUB_ENV
+          echo "BUILD_TIME=$(TZ=America/Chicago git log -1 --date=format:'%m/%d/%Y %I:%M %p %Z' --pretty=%cd)" >> $GITHUB_ENV
 
           SOURCE_MESSAGE=$(git log -1 --pretty=%s)
           SAFE_MESSAGE=$(printf '%s' "$SOURCE_MESSAGE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
           echo "SAFE_MESSAGE=$SAFE_MESSAGE" >> $GITHUB_ENV
 
-          PR_NUMBER=$(git log -1 --pretty=%s | grep -oE '#[0-9]+' | head -n1 | tr -d '#')
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+      - name: Get PR title
+        if: env.PR_NUMBER != ''
+        run: |
+          PR_TITLE=$(curl -s \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.SOURCE_REPO_TOKEN }}" \
+            https://api.github.com/repos/kayden-plemons/CyberGen/pulls/${PR_NUMBER} \
+            | jq -r '.title')
 
-          echo "BUILD_TIME=$(TZ=America/Chicago git log -1 --date=format:'%m/%d/%Y %I:%M %p %Z' --pretty=%cd)" >> $GITHUB_ENV
+          SAFE_PR_TITLE=$(printf '%s' "$PR_TITLE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
+          echo "DISPLAY_TITLE=$SAFE_PR_TITLE" >> $GITHUB_ENV
+
+      - name: Fallback title
+        if: env.PR_NUMBER == ''
+        run: |
+          echo "DISPLAY_TITLE=${SAFE_MESSAGE}" >> $GITHUB_ENV
 
       - name: Build PR section
         run: |
@@ -64,11 +77,10 @@ jobs:
       - name: Inject build info into web index
         working-directory: source
         run: |
-          sed -i.bak "s|__BRANCH__|${SOURCE_BRANCH}|g" web/index.html
           sed -i.bak "s|__PR_SECTION__|${PR_SECTION}|g" web/index.html
           sed -i.bak "s|__FULL_SHA__|${FULL_SHA}|g" web/index.html
           sed -i.bak "s|__SHA__|${SOURCE_SHA}|g" web/index.html
-          sed -i.bak "s|__MESSAGE__|${SAFE_MESSAGE}|g" web/index.html
+          sed -i.bak "s|__TITLE__|${DISPLAY_TITLE}|g" web/index.html
           sed -i.bak "s|__TIME__|${BUILD_TIME}|g" web/index.html
           rm -f web/index.html.bak
 
