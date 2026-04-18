@@ -59,10 +59,14 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.SOURCE_REPO_TOKEN }}" \
             https://api.github.com/repos/kayden-plemons/CyberGen/pulls/${PR_NUMBER} \
-            | jq -r '.title')
+            | jq -r '.title // empty')
 
-          SAFE_PR_TITLE=$(printf '%s' "$PR_TITLE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
-          echo "DISPLAY_TITLE=$SAFE_PR_TITLE" >> $GITHUB_ENV
+          if [ -z "$PR_TITLE" ]; then
+            echo "DISPLAY_TITLE=${SAFE_MESSAGE}" >> $GITHUB_ENV
+          else
+            SAFE_PR_TITLE=$(printf '%s' "$PR_TITLE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
+            echo "DISPLAY_TITLE=$SAFE_PR_TITLE" >> $GITHUB_ENV
+          fi
 
       - name: Fallback title
         if: env.PR_NUMBER == ''
@@ -74,7 +78,7 @@ jobs:
           if [ -z "$PR_NUMBER" ]; then
             echo 'PR_SECTION=—' >> $GITHUB_ENV
           else
-            echo "PR_SECTION=<a href=\"https://github.com/kayden-plemons/CyberGen/pull/${PR_NUMBER}\" target=\"_blank\">#${PR_NUMBER}</a>" >> $GITHUB_ENV
+            echo "PR_SECTION=<a href=\"https://github.com/kayden-plemons/CyberGen/pull/${PR_NUMBER}\" target=\"_blank\" rel=\"noopener noreferrer\">#${PR_NUMBER}</a>" >> $GITHUB_ENV
           fi
 
       - name: Inject build info into web index
