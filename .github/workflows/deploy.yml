@@ -40,8 +40,6 @@ jobs:
       - name: Get source build info
         working-directory: source
         run: |
-          echo "SOURCE_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "FULL_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
           echo "PR_NUMBER=$(git log -1 --pretty=%s | grep -oE '#[0-9]+' | head -n1 | tr -d '#')" >> $GITHUB_ENV
           echo "BUILD_TIME=$(TZ=America/Chicago git log -1 --date=format:'%m/%d/%Y %I:%M %p %Z' --pretty=%cd)" >> $GITHUB_ENV
 
@@ -73,20 +71,19 @@ jobs:
         run: |
           echo "DISPLAY_TITLE=${SAFE_MESSAGE}" >> $GITHUB_ENV
 
-      - name: Build PR section
+      - name: Build PR URL
         run: |
           if [ -z "$PR_NUMBER" ]; then
-            echo 'PR_SECTION=—' >> $GITHUB_ENV
+            echo "PR_URL=#" >> $GITHUB_ENV
           else
-            echo "PR_SECTION=<a href=\"https://github.com/kayden-plemons/CyberGen/pull/${PR_NUMBER}\" target=\"_blank\" rel=\"noopener noreferrer\">#${PR_NUMBER}</a>" >> $GITHUB_ENV
+            echo "PR_URL=https://github.com/kayden-plemons/CyberGen/pull/${PR_NUMBER}" >> $GITHUB_ENV
           fi
 
       - name: Inject build info into web index
         working-directory: source
         run: |
-          sed -i.bak "s|__PR_SECTION__|${PR_SECTION}|g" web/index.html
-          sed -i.bak "s|__FULL_SHA__|${FULL_SHA}|g" web/index.html
-          sed -i.bak "s|__SHA__|${SOURCE_SHA}|g" web/index.html
+          sed -i.bak "s|https://github.com/kayden-plemons/CyberGen/pull/__PR_NUM__|${PR_URL}|g" web/index.html
+          sed -i.bak "s|__PR_NUM__|${PR_NUMBER}|g" web/index.html
           sed -i.bak "s|__TITLE__|${DISPLAY_TITLE}|g" web/index.html
           sed -i.bak "s|__TIME__|${BUILD_TIME}|g" web/index.html
           rm -f web/index.html.bak
