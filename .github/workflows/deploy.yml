@@ -53,14 +53,22 @@ jobs:
       - name: Get PR title
         if: env.PR_NUMBER != ''
         run: |
-          PR_TITLE=$(curl -s \
+          RESPONSE=$(curl -s \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.SOURCE_REPO_TOKEN }}" \
-            https://api.github.com/repos/kayden-plemons/CyberGen/pulls/${PR_NUMBER} \
-            | jq -r '.title')
+            https://api.github.com/repos/kayden-plemons/CyberGen/pulls/${PR_NUMBER})
 
-          SAFE_PR_TITLE=$(printf '%s' "$PR_TITLE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
-          echo "DISPLAY_TITLE=$SAFE_PR_TITLE" >> $GITHUB_ENV
+          echo "PR API response snippet:"
+          echo "$RESPONSE" | jq '{title, message, documentation_url}' || true
+
+          PR_TITLE=$(echo "$RESPONSE" | jq -r '.title // empty')
+
+          if [ -z "$PR_TITLE" ]; then
+            echo "DISPLAY_TITLE=${SAFE_MESSAGE}" >> $GITHUB_ENV
+          else
+            SAFE_PR_TITLE=$(printf '%s' "$PR_TITLE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
+            echo "DISPLAY_TITLE=$SAFE_PR_TITLE" >> $GITHUB_ENV
+          fi
 
       - name: Fallback title
         if: env.PR_NUMBER == ''
