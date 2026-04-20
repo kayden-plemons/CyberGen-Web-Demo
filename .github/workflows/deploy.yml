@@ -41,7 +41,7 @@ jobs:
         working-directory: source
         run: |
           echo "PR_NUMBER=$(git log -1 --pretty=%s | grep -oE '#[0-9]+' | head -n1 | tr -d '#')" >> $GITHUB_ENV
-          echo "BUILD_TIME=$(TZ=America/Chicago git log -1 --date=format:'%m/%d/%Y %I:%M %p %Z' --pretty=%cd)" >> $GITHUB_ENV
+          echo "BUILD_TIME=$(TZ=America/Chicago date +'%m/%d/%Y %I:%M %p %Z')" >> $GITHUB_ENV
 
           SOURCE_MESSAGE=$(git log -1 --pretty=%s)
           SAFE_MESSAGE=$(printf '%s' "$SOURCE_MESSAGE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
