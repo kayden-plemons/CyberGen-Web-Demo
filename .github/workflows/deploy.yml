@@ -58,14 +58,14 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.SOURCE_REPO_TOKEN }}" \
             https://api.github.com/repos/kayden-plemons/CyberGen/pulls/${PR_NUMBER} \
             | jq -r '.title')
-      
+
           SAFE_PR_TITLE=$(printf '%s' "$PR_TITLE" | sed 's/[&|<>]/\\&/g; s/"/\\"/g')
           echo "DISPLAY_TITLE=$SAFE_PR_TITLE" >> $GITHUB_ENV
-      
-            - name: Fallback title
-              if: env.PR_NUMBER == ''
-              run: |
-                echo "DISPLAY_TITLE=${SAFE_MESSAGE}" >> $GITHUB_ENV
+
+      - name: Fallback title
+        if: env.PR_NUMBER == ''
+        run: |
+          echo "DISPLAY_TITLE=${SAFE_MESSAGE}" >> $GITHUB_ENV
 
       - name: Build PR URL
         run: |
