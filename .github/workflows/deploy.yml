@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [source-main-updated]
-  schedule:
-    - cron: "0 9 * * *"
 
 permissions:
   contents: read
